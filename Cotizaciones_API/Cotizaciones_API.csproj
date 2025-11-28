@@ -19,8 +19,10 @@
 
   <ItemGroup>
     <Folder Include="Controllers\" />
+    <Folder Include="Services\Moneda\" />
+    <Folder Include="Services\TipoCliente\" />
+    <Folder Include="Services\TipoSeguro\" />
     <Folder Include="Utils\" />
-    <Folder Include="Services\" />
     <Folder Include="Validators\Moneda\" />
     <Folder Include="Validators\TipoSeguro\" />
     <Folder Include="Validators\TipoCliente\" />
