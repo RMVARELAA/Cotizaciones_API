@@ -21,7 +21,7 @@ namespace Cotizaciones_API.Repositories.Cliente
         /// Inserta un cliente llamando al SP sp_Cliente_Insert
         /// Devuelve el Id generado (INT).
         /// </summary>
-        public async Task<int> InsertAsync(Cliente cliente)
+        public async Task<int> InsertAsync(Models.Cliente cliente)
         {
             const string sp = "dbo.sp_Cliente_Insert";
 
@@ -57,7 +57,7 @@ namespace Cotizaciones_API.Repositories.Cliente
         /// <summary>
         /// Obtiene un cliente por Id llamando al SP sp_Cliente_GetById
         /// </summary>
-        public async Task<Cliente> GetByIdAsync(int id)
+        public async Task<Models.Cliente> GetByIdAsync(int id)
         {
             const string sp = "dbo.sp_Cliente_GetById";
 
@@ -67,7 +67,7 @@ namespace Cotizaciones_API.Repositories.Cliente
                 var parameters = new DynamicParameters();
                 parameters.Add("@IdCliente", id, DbType.Int32);
 
-                var cliente = await conn.QueryFirstOrDefaultAsync<Cliente>(
+                var cliente = await conn.QueryFirstOrDefaultAsync<Models.Cliente>(
                     sp,
                     parameters,
                     commandType: CommandType.StoredProcedure);
@@ -84,14 +84,14 @@ namespace Cotizaciones_API.Repositories.Cliente
         /// <summary>
         /// Obtiene todos los clientes activos llamando al SP sp_Cliente_GetAll
         /// </summary>
-        public async Task<IEnumerable<Cliente>> GetAllAsync()
+        public async Task<IEnumerable<Models.Cliente>> GetAllAsync()
         {
             const string sp = "dbo.sp_Cliente_GetAll";
 
             try
             {
                 using var conn = _context.CreateConnection();
-                return await conn.QueryAsync<Cliente>(
+                return await conn.QueryAsync<Models.Cliente>(
                     sp,
                     commandType: CommandType.StoredProcedure);
             }

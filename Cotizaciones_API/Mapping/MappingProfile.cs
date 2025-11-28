@@ -14,7 +14,7 @@ namespace Cotizaciones_API.Mapping
         public MappingProfile()
         {
             // Cliente
-            CreateMap<ClienteCreateDtO, Cliente>()
+            CreateMap<ClienteCreateDto, Cliente>()
                 .ForMember(d => d.UsuarioCreacion, o => o.MapFrom(s => s.UsuarioCreacion));
             CreateMap<ClienteUpdateDto, Cliente>()
                 .ForMember(d => d.UsuarioModificacion, o => o.MapFrom(s => s.UsuarioModificacion));
