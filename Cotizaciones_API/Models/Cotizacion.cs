@@ -1,0 +1,28 @@
+﻿namespace Cotizaciones_API.Models
+{
+    public class Cotizacion
+    {
+        public long IdCotizacion { get; set; }
+        public string? NumeroCotizacion { get; set; }
+        public DateTime FechaCotizacion { get; set; }
+
+        public int IdTipoSeguro { get; set; }
+        public int IdMoneda { get; set; }
+        public int IdCliente { get; set; }
+
+        public string? DescripcionBien { get; set; }
+        public decimal SumaAsegurada { get; set; }
+        public decimal Tasa { get; set; }   // ej: 0.05 = 5%
+        public decimal PrimaNeta { get; set; }
+
+        public string? Observaciones { get; set; }
+
+        public DateTime FechaCreacion { get; set; }
+        public DateTime? FechaModificacion { get; set; }
+
+        public string? UsuarioCreacion { get; set; }
+        public string? UsuarioModificacion { get; set; }
+
+        public bool Estado { get; set; }
+    }
+}
