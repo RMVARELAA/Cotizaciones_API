@@ -23,6 +23,7 @@ IF OBJECT_ID('dbo.Moneda', 'U') IS NOT NULL DROP TABLE dbo.Moneda;
 IF OBJECT_ID('dbo.Clientes', 'U') IS NOT NULL DROP TABLE dbo.Clientes;
 IF OBJECT_ID('dbo.TipoClientes', 'U') IS NOT NULL DROP TABLE dbo.TipoClientes;
 IF OBJECT_ID('dbo.TipoSeguros', 'U') IS NOT NULL DROP TABLE dbo.TipoSeguros;
+IF OBJECT_ID('dbo.ReglasTasa', 'U') IS NOT NULL DROP TABLE dbo.ReglasTasa;
 GO
 
 -- ===========================================
@@ -150,6 +151,31 @@ CREATE INDEX IX_Cotizaciones_Fecha ON dbo.Cotizaciones (FechaCotizacion);
 CREATE INDEX IX_Cotizaciones_IdCliente ON dbo.Cotizaciones (IdCliente);
 CREATE INDEX IX_Cotizaciones_IdTipoSeguro ON dbo.Cotizaciones (IdTipoSeguro);
 GO
+
+CREATE TABLE [dbo].[ReglasTasa](
+	[IdRegla] [int] IDENTITY(1,1) NOT NULL,
+	[IdTipoSeguro] [int] NOT NULL,
+	[SumaMin] [decimal](18, 2) NOT NULL,
+	[SumaMax] [decimal](18, 2) NULL,
+	[Tasa] [decimal](9, 6) NOT NULL,
+	[FechaCreacion] [datetime2](3) NOT NULL,
+	[Estado] [bit] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[IdRegla] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+ALTER TABLE [dbo].[ReglasTasa] ADD  DEFAULT ((0)) FOR [SumaMin]
+GO
+
+ALTER TABLE [dbo].[ReglasTasa] ADD  DEFAULT (sysutcdatetime()) FOR [FechaCreacion]
+GO
+
+ALTER TABLE [dbo].[ReglasTasa] ADD  DEFAULT ((1)) FOR [Estado]
+GO
+
 
 COMMIT TRANSACTION;
 GO
