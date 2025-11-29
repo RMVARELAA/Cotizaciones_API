@@ -19,13 +19,22 @@ SET XACT_ABORT ON;
 
 -- Eliminar tablas si existen (en orden contrario a las FKs)
 IF OBJECT_ID('dbo.Cotizaciones', 'U') IS NOT NULL DROP TABLE dbo.Cotizaciones;
-IF OBJECT_ID('dbo.Moneda', 'U') IS NOT NULL DROP TABLE dbo.Moneda;
+IF OBJECT_ID('dbo.ReglasTasa', 'U') IS NOT NULL DROP TABLE dbo.ReglasTasa;
 IF OBJECT_ID('dbo.Clientes', 'U') IS NOT NULL DROP TABLE dbo.Clientes;
+IF OBJECT_ID('dbo.Moneda', 'U') IS NOT NULL DROP TABLE dbo.Moneda;
 IF OBJECT_ID('dbo.TipoClientes', 'U') IS NOT NULL DROP TABLE dbo.TipoClientes;
 IF OBJECT_ID('dbo.TipoSeguros', 'U') IS NOT NULL DROP TABLE dbo.TipoSeguros;
-IF OBJECT_ID('dbo.ReglasTasa', 'U') IS NOT NULL DROP TABLE dbo.ReglasTasa;
+GO
+	
+IF OBJECT_ID('dbo.Seq_Cotizacion', 'SO') IS NOT NULL
+    DROP SEQUENCE dbo.Seq_Cotizacion;
 GO
 
+CREATE SEQUENCE dbo.Seq_Cotizacion
+    AS BIGINT
+    START WITH 1
+    INCREMENT BY 1;
+GO
 -- ===========================================
 -- Tabla TiposSeguros (catálogo)
 -- ===========================================
