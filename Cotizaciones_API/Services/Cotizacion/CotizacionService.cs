@@ -1,6 +1,5 @@
 ﻿using Cotizaciones_API.Data;
 using Cotizaciones_API.DTOs.Cotizacion;
-using Cotizaciones_API.Interfaces;
 using Cotizaciones_API.Interfaces.Cliente;
 using Cotizaciones_API.Interfaces.Cotizacion;
 using Cotizaciones_API.Interfaces.Moneda;
@@ -10,7 +9,6 @@ using Dapper;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Threading.Tasks;
 
 namespace Cotizaciones_API.Services.Cotizacion
@@ -109,6 +107,77 @@ namespace Cotizaciones_API.Services.Cotizacion
         public Task<Models.Cotizacion> GetByIdAsync(long id)
         {
             return _cotRepo.GetByIdAsync(id);
+        }
+
+        // Actualiza una cotización existente. Recalcula PrimaNeta y valida FKs si cambian.
+        public async Task UpdateAsync(Models.Cotizacion cotizacion)
+        {
+            try
+            {
+                if (cotizacion == null) throw new ArgumentNullException(nameof(cotizacion));
+                if (cotizacion.IdCotizacion <= 0) throw new ArgumentException("IdCotizacion inválido.");
+                if (cotizacion.SumaAsegurada <= 0) throw new ArgumentException("SumaAsegurada debe ser mayor a 0.");
+                if (cotizacion.Tasa < 0 || cotizacion.Tasa > 1) throw new ArgumentException("Tasa inválida (0 - 1).");
+
+                // Existe la cotización?
+                var existing = await _cotRepo.GetByIdAsync(cotizacion.IdCotizacion);
+                if (existing == null) throw new KeyNotFoundException("Cotización no encontrada.");
+
+                // Si se cambió cliente/tipo/moneda, verificar existencia
+                if (cotizacion.IdCliente != existing.IdCliente)
+                {
+                    var cliente = await _clienteRepo.GetByIdAsync(cotizacion.IdCliente);
+                    if (cliente == null) throw new KeyNotFoundException("Cliente no encontrado.");
+                }
+
+                if (cotizacion.IdTipoSeguro != existing.IdTipoSeguro)
+                {
+                    var tipoSeguro = await _tipoSeguroRepo.GetByIdAsync(cotizacion.IdTipoSeguro);
+                    if (tipoSeguro == null) throw new KeyNotFoundException("Tipo de seguro no encontrado.");
+                }
+
+                if (cotizacion.IdMoneda != existing.IdMoneda)
+                {
+                    var moneda = await _monedaRepo.GetByIdAsync(cotizacion.IdMoneda);
+                    if (moneda == null) throw new KeyNotFoundException("Moneda no encontrada.");
+                }
+
+                // Recalcular prima neta
+                cotizacion.PrimaNeta = Math.Round(cotizacion.SumaAsegurada * cotizacion.Tasa, 2);
+                cotizacion.FechaCotizacion = existing.FechaCotizacion; // conservar fecha original a menos que quieras modificarla
+
+                await _cotRepo.UpdateAsync(cotizacion);
+
+                _logger.LogInformation("Cotización actualizada Id={Id}", cotizacion.IdCotizacion);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en CotizacionService.UpdateAsync {@Cotizacion}", cotizacion);
+                throw;
+            }
+        }
+
+        // Eliminación lógica de cotización
+        public async Task DeleteAsync(long id, string usuarioModificacion)
+        {
+            try
+            {
+                if (id <= 0) throw new ArgumentException("Id inválido.");
+                if (string.IsNullOrWhiteSpace(usuarioModificacion)) throw new ArgumentException("UsuarioModificacion es requerido.");
+
+                // Verificar existencia
+                var existing = await _cotRepo.GetByIdAsync(id);
+                if (existing == null) throw new KeyNotFoundException("Cotización no encontrada.");
+
+                await _cotRepo.DeleteAsync(id, usuarioModificacion);
+
+                _logger.LogInformation("Cotización eliminada (lógicamente) Id={Id} Usuario={Usuario}", id, usuarioModificacion);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en CotizacionService.DeleteAsync CotizacionId={Id}", id);
+                throw;
+            }
         }
     }
 }

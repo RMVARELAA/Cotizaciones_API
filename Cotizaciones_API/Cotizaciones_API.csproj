@@ -18,7 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
     <Folder Include="Services\Moneda\" />
     <Folder Include="Services\TipoCliente\" />
     <Folder Include="Services\TipoSeguro\" />

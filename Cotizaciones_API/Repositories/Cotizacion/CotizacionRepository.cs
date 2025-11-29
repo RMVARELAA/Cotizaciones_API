@@ -3,6 +3,7 @@ using System.Data;
 using Cotizaciones_API.Data;
 using Cotizaciones_API.Interfaces.Cotizacion;
 using Cotizaciones_API.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Cotizaciones_API.Repositories.Cotizacion
 {
@@ -87,6 +88,73 @@ namespace Cotizaciones_API.Repositories.Cotizacion
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error GetReportAsync desde={desde} hasta={hasta} idTipoSeguro={idTipoSeguro}", desde, hasta, idTipoSeguro);
+                throw;
+            }
+        }
+
+        public async Task UpdateAsync(Models.Cotizacion cotizacion)
+        {
+            const string sp = "dbo.sp_Cotizacion_Update"; // Ajusta nombre/parametros si tu SP difiere
+
+            try
+            {
+                using var conn = _context.CreateConnection();
+                var p = new DynamicParameters();
+
+                p.Add("@IdCotizacion", cotizacion.IdCotizacion, DbType.Int64);
+                p.Add("@IdTipoSeguro", cotizacion.IdTipoSeguro, DbType.Int32);
+                p.Add("@IdMoneda", cotizacion.IdMoneda, DbType.Int32);
+                p.Add("@IdCliente", cotizacion.IdCliente, DbType.Int32);
+                p.Add("@DescripcionBien", cotizacion.DescripcionBien, DbType.String);
+                p.Add("@SumaAsegurada", cotizacion.SumaAsegurada, DbType.Decimal);
+                p.Add("@Tasa", cotizacion.Tasa, DbType.Decimal);
+                p.Add("@PrimaNeta", cotizacion.PrimaNeta, DbType.Decimal);
+                p.Add("@Observaciones", cotizacion.Observaciones, DbType.String);
+                p.Add("@UsuarioModificacion", cotizacion.UsuarioModificacion, DbType.String);
+
+                var rows = await conn.ExecuteAsync(sp, p, commandType: CommandType.StoredProcedure);
+
+                if (rows == 0)
+                {
+                    throw new KeyNotFoundException($"Cotización con Id {cotizacion.IdCotizacion} no encontrada.");
+                }
+            }
+            catch (KeyNotFoundException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error UpdateAsync Cotizacion {@Cotizacion}", cotizacion);
+                throw;
+            }
+        }
+
+        public async Task DeleteAsync(long id, string usuarioModificacion)
+        {
+            const string sp = "dbo.sp_Cotizacion_Delete"; // Ajusta nombre/parametros si tu SP difiere
+
+            try
+            {
+                using var conn = _context.CreateConnection();
+                var p = new DynamicParameters();
+                p.Add("@IdCotizacion", id, DbType.Int64);
+                p.Add("@UsuarioModificacion", usuarioModificacion, DbType.String);
+
+                var rows = await conn.ExecuteAsync(sp, p, commandType: CommandType.StoredProcedure);
+
+                if (rows == 0)
+                {
+                    throw new KeyNotFoundException($"Cotización con Id {id} no encontrada.");
+                }
+            }
+            catch (KeyNotFoundException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error DeleteAsync CotizacionId={Id}", id);
                 throw;
             }
         }

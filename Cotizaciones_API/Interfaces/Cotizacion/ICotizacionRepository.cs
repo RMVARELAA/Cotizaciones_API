@@ -7,5 +7,8 @@ namespace Cotizaciones_API.Interfaces.Cotizacion
         Task<long> InsertAsync(Models.Cotizacion cotizacion);
         Task<Models.Cotizacion> GetByIdAsync(long id);
         Task<IEnumerable<dynamic>> GetReportAsync(DateTime? desde, DateTime? hasta, int? idTipoSeguro);
+
+        Task UpdateAsync(Models.Cotizacion cotizacion);
+        Task DeleteAsync(long id, string usuarioModificacion);
     }
 }

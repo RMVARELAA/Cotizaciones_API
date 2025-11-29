@@ -1,9 +1,13 @@
 using Cotizaciones_API.Data;
 using Cotizaciones_API.Interfaces.Cliente;
 using Cotizaciones_API.Interfaces.Cotizacion;
+using Cotizaciones_API.Interfaces.TipoSeguro;
+using Cotizaciones_API.Interfaces.Moneda;
 using Cotizaciones_API.Mapping; // MappingProfile
 using Cotizaciones_API.Repositories.Cliente;
 using Cotizaciones_API.Repositories.Cotizacion;
+using Cotizaciones_API.Repositories.TipoSeguro;
+using Cotizaciones_API.Repositories.Moneda;
 using Cotizaciones_API.Services.Cliente;
 using Cotizaciones_API.Services.Cotizacion;
 
@@ -28,6 +32,8 @@ builder.Services.AddSingleton<DapperContext>();
 // Repositorios
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<ICotizacionRepository, CotizacionRepository>();
+builder.Services.AddScoped<ITipoSeguroRepository, TipoSeguroRepository>();
+builder.Services.AddScoped<IMonedaRepository, MonedaRepository>();
 
 // Servicios
 builder.Services.AddScoped<IClienteService, ClienteService>();
