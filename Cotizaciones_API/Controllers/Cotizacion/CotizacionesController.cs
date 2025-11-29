@@ -72,6 +72,24 @@ namespace Cotizaciones_API.Controllers.Cotizacion
             }
         }
 
+        // GET: api/cotizaciones
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            try
+            {
+                var list = await _cotService.GetAllAsync(); // devuelve IEnumerable<CotizacionReadDto> por ejemplo
+                if (list == null || !list.Any()) return NoContent();
+                return Ok(list);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error obteniendo todas las cotizaciones");
+                return Problem("Error al obtener cotizaciones", statusCode: 500);
+            }
+        }
+
+
         // GET: api/cotizaciones/{id}
         [HttpGet("{id:long}")]
         public async Task<IActionResult> GetById([FromRoute] long id)

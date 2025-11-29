@@ -51,6 +51,21 @@ namespace Cotizaciones_API.Repositories.Cotizacion
             }
         }
 
+        public async Task<IEnumerable<CotizacionReadDto>> GetAllAsync()
+        {
+            const string sp = "dbo.sp_Cotizacion_GetAll";
+            try
+            {
+                using var conn = _context.CreateConnection();
+                var cotizaciones = await conn.QueryAsync<CotizacionReadDto>(sp, commandType: CommandType.StoredProcedure);
+                return cotizaciones;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error GetAllAsync Cotizaciones");
+                throw;
+            }
+        }
         public async Task<CotizacionReadDto> GetByIdAsync(long id)
         {
             const string sp = "dbo.sp_Cotizacion_GetById";

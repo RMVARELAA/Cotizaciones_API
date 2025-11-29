@@ -118,6 +118,10 @@ namespace Cotizaciones_API.Services.Cotizacion
             }
         }
 
+        public Task<IEnumerable<CotizacionReadDto>> GetAllAsync()
+        {
+            return _cotRepo.GetAllAsync();
+        }
         public Task<IEnumerable<dynamic>> GetReportAsync(DateTime? desde, DateTime? hasta, int? idTipoSeguro)
         {
             return _cotRepo.GetReportAsync(desde, hasta, idTipoSeguro);
