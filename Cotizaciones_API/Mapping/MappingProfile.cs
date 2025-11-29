@@ -25,20 +25,21 @@ namespace Cotizaciones_API.Mapping
             CreateMap<CotizacionUpdateDto, Cotizacion>();
             CreateMap<Cotizacion, CotizacionReadDto>();
 
-            // TipoSeguro
-            CreateMap<TipoSeguroCreateDto, TipoSeguro>();
-            CreateMap<TipoSeguroUpdateDto, TipoSeguro>();
-            CreateMap<TipoSeguro, TipoSeguroReadDto>();
-
             // TipoCliente
+            CreateMap<TipoCliente, TipoClienteReadDto>();
             CreateMap<TipoClienteCreateDto, TipoCliente>();
             CreateMap<TipoClienteUpdateDto, TipoCliente>();
-            CreateMap<TipoCliente, TipoClienteReadDto>();
+
+            // TipoSeguro
+            CreateMap<TipoSeguro, TipoSeguroReadDto>();
+            CreateMap<TipoSeguroCreateDto, TipoSeguro>();
+            CreateMap<TipoSeguroUpdateDto, TipoSeguro>();
 
             // Moneda
+            CreateMap<Moneda, MonedaReadDto>();
             CreateMap<MonedaCreateDto, Moneda>();
             CreateMap<MonedaUpdateDto, Moneda>();
-            CreateMap<Moneda, MonedaReadDto>();
+
         }
     }
 }

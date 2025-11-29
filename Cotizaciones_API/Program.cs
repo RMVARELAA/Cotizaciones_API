@@ -1,19 +1,22 @@
 using Cotizaciones_API.Data;
 using Cotizaciones_API.Interfaces.Cliente;
 using Cotizaciones_API.Interfaces.Cotizacion;
-using Cotizaciones_API.Interfaces.TipoSeguro;
 using Cotizaciones_API.Interfaces.Moneda;
+using Cotizaciones_API.Interfaces.TipoCliente;
+using Cotizaciones_API.Interfaces.TipoSeguro;
+using Cotizaciones_API.Interfaces.Utils;
 using Cotizaciones_API.Mapping; // MappingProfile
 using Cotizaciones_API.Repositories.Cliente;
 using Cotizaciones_API.Repositories.Cotizacion;
-using Cotizaciones_API.Repositories.TipoSeguro;
 using Cotizaciones_API.Repositories.Moneda;
+using Cotizaciones_API.Repositories.TipoCliente;
+using Cotizaciones_API.Repositories.TipoSeguro;
 using Cotizaciones_API.Services.Cliente;
 using Cotizaciones_API.Services.Cotizacion;
-using Cotizaciones_API.Interfaces.Utils;
+using Cotizaciones_API.Services.Moneda;
+using Cotizaciones_API.Services.TipoCliente;
+using Cotizaciones_API.Services.TipoSeguro;
 using Cotizaciones_API.Services.Utils;
-
-
 //using Cotizaciones_API.Services;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,10 +38,16 @@ builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<ICotizacionRepository, CotizacionRepository>();
 builder.Services.AddScoped<ITipoSeguroRepository, TipoSeguroRepository>();
 builder.Services.AddScoped<IMonedaRepository, MonedaRepository>();
+builder.Services.AddScoped<ITipoClienteRepository, TipoClienteRepository>();
+
 
 // Servicios
 builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<ICotizacionService, CotizacionService>();
+builder.Services.AddScoped<ITipoSeguroService, TipoSeguroService>();
+builder.Services.AddScoped<IMonedaService, MonedaService>();
+builder.Services.AddScoped<ITipoClienteService, TipoClienteService>();
+
 
 // Utilidades
 //builder.Services.AddSingleton<IEmailSender, EmailSender>();

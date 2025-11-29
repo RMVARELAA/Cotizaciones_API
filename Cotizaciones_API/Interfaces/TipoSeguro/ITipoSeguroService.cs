@@ -1,18 +1,15 @@
 ﻿using Cotizaciones_API.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System;
 
 namespace Cotizaciones_API.Interfaces.TipoSeguro
 {
-    public interface ITipoSeguroRepository
+    public interface ITipoSeguroService
     {
-        Task<int> InsertAsync(Models.TipoSeguro item);
-        Task<Models.TipoSeguro?> GetByIdAsync(int id);
+        Task<int> CreateAsync(Models.TipoSeguro model);
         Task<IEnumerable<Models.TipoSeguro>> GetAllAsync();
-
-        // Operaciones adicionales para CRUD completo
-        Task UpdateAsync(Models.TipoSeguro item);
+        Task<Models.TipoSeguro?> GetByIdAsync(int id);
+        Task UpdateAsync(Models.TipoSeguro model);
         Task DeleteAsync(int id, string usuarioModificacion);
     }
 }

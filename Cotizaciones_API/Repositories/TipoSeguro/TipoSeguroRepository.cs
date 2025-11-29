@@ -1,9 +1,12 @@
-﻿using Cotizaciones_API.Data;
-using Cotizaciones_API.Interfaces;
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Threading.Tasks;
+using Cotizaciones_API.Data;
 using Cotizaciones_API.Interfaces.TipoSeguro;
 using Cotizaciones_API.Models;
 using Dapper;
-using System.Data;
+using Microsoft.Extensions.Logging;
 
 namespace Cotizaciones_API.Repositories.TipoSeguro
 {
@@ -28,6 +31,7 @@ namespace Cotizaciones_API.Repositories.TipoSeguro
                 p.Add("@NombreSeguro", item.NombreSeguro, DbType.String);
                 p.Add("@Codigo", item.Codigo, DbType.String);
                 p.Add("@Descripcion", item.Descripcion, DbType.String);
+                p.Add("@UsuarioCreacion", item.UsuarioCreacion, DbType.String);
 
                 var id = await conn.QuerySingleAsync<int>(sp, p, commandType: CommandType.StoredProcedure);
                 return id;
@@ -39,7 +43,7 @@ namespace Cotizaciones_API.Repositories.TipoSeguro
             }
         }
 
-        public async Task<Models.TipoSeguro> GetByIdAsync(int id)
+        public async Task<Models.TipoSeguro?> GetByIdAsync(int id)
         {
             const string sp = "dbo.sp_TipoSeguro_GetById";
             try
@@ -69,6 +73,57 @@ namespace Cotizaciones_API.Repositories.TipoSeguro
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error GetAllAsync TipoSeguros");
+                throw;
+            }
+        }
+
+        public async Task UpdateAsync(Models.TipoSeguro item)
+        {
+            const string sp = "dbo.sp_TipoSeguro_Update";
+            try
+            {
+                using var conn = _context.CreateConnection();
+                var p = new DynamicParameters();
+                p.Add("@IdTipoSeguro", item.IdTipoSeguro, DbType.Int32);
+                p.Add("@NombreSeguro", item.NombreSeguro, DbType.String);
+                p.Add("@Codigo", item.Codigo, DbType.String);
+                p.Add("@Descripcion", item.Descripcion, DbType.String);
+                p.Add("@UsuarioModificacion", item.UsuarioModificacion, DbType.String);
+
+                var rows = await conn.ExecuteAsync(sp, p, commandType: CommandType.StoredProcedure);
+                if (rows == 0) throw new KeyNotFoundException($"TipoSeguro con Id {item.IdTipoSeguro} no encontrado.");
+            }
+            catch (KeyNotFoundException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error UpdateAsync TipoSeguro {@TipoSeguro}", item);
+                throw;
+            }
+        }
+
+        public async Task DeleteAsync(int id, string usuarioModificacion)
+        {
+            const string sp = "dbo.sp_TipoSeguro_Delete";
+            try
+            {
+                using var conn = _context.CreateConnection();
+                var p = new DynamicParameters();
+                p.Add("@IdTipoSeguro", id, DbType.Int32);
+                p.Add("@UsuarioModificacion", usuarioModificacion, DbType.String);
+
+                var rows = await conn.ExecuteAsync(sp, p, commandType: CommandType.StoredProcedure);
+                if (rows == 0) throw new KeyNotFoundException($"TipoSeguro con Id {id} no encontrado.");
+            }
+            catch (KeyNotFoundException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error DeleteAsync TipoSeguroId={Id}", id);
                 throw;
             }
         }

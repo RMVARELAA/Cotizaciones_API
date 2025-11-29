@@ -2,8 +2,10 @@
 {
     public interface ITipoClienteRepository
     {
-        Task<int> InsertAsync(Models.TipoCliente item);
+        Task<int> CreateAsync(Models.TipoCliente item);
         Task<Models.TipoCliente> GetByIdAsync(int id);
         Task<IEnumerable<Models.TipoCliente>> GetAllAsync();
+        Task UpdateAsync(Models.TipoCliente item);
+        Task DeleteAsync(int id, string usuarioModificacion);
     }
 }

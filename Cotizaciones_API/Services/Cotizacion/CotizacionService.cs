@@ -118,18 +118,43 @@ namespace Cotizaciones_API.Services.Cotizacion
             }
         }
 
-        public Task<IEnumerable<CotizacionReadDto>> GetAllAsync()
+        public async Task<IEnumerable<CotizacionReadDto>> GetAllAsync()
         {
-            return _cotRepo.GetAllAsync();
-        }
-        public Task<IEnumerable<dynamic>> GetReportAsync(DateTime? desde, DateTime? hasta, int? idTipoSeguro)
-        {
-            return _cotRepo.GetReportAsync(desde, hasta, idTipoSeguro);
+            try
+            {
+                return await _cotRepo.GetAllAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error GetAllAsync Cotizaciones");
+                throw;
+            }
         }
 
-        public Task<CotizacionReadDto?> GetByIdAsync(long id)
+        public async Task<IEnumerable<dynamic>> GetReportAsync(DateTime? desde, DateTime? hasta, int? idTipoSeguro)
         {
-            return _cotRepo.GetByIdAsync(id);
+            try
+            {
+                return await _cotRepo.GetReportAsync(desde, hasta, idTipoSeguro);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error GetReportAsync desde={Desde} hasta={Hasta} idTipoSeguro={Tipo}", desde, hasta, idTipoSeguro);
+                throw;
+            }
+        }
+
+        public async Task<CotizacionReadDto?> GetByIdAsync(long id)
+        {
+            try
+            {
+                return await _cotRepo.GetByIdAsync(id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error GetByIdAsync CotizacionId={Id}", id);
+                throw;
+            }
         }
 
         // Actualiza una cotización existente. Recalcula PrimaNeta y valida FKs si cambian.

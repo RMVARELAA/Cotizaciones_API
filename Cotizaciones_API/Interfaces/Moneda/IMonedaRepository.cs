@@ -2,8 +2,10 @@
 {
     public interface IMonedaRepository
     {
-        Task<int> InsertAsync(Models.Moneda item);
+        Task<int> CreateAsync(Models.Moneda item);
         Task<Models.Moneda> GetByIdAsync(int id);
         Task<IEnumerable<Models.Moneda>> GetAllAsync();
+        Task UpdateAsync(Models.Moneda item);
+        Task DeleteAsync(int id, string usuarioModificacion);
     }
 }
