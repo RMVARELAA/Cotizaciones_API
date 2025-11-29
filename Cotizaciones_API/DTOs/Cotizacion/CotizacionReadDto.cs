@@ -8,6 +8,7 @@
         public int IdTipoSeguro { get; set; }
         public string? NombreTipoSeguro { get; set; }
         public int IdMoneda { get; set; }
+        public string? MonedaCodigoISO { get; set; } // añadido
         public string? MonedaNombre { get; set; }
         public int IdCliente { get; set; }
         public string? ClienteNombre { get; set; }
@@ -19,6 +20,9 @@
         public string? Observaciones { get; set; }
 
         public DateTime FechaCreacion { get; set; }
+        public DateTime? FechaModificacion { get; set; } // añadido
+        public string? UsuarioCreacion { get; set; } // añadido
+        public string? UsuarioModificacion { get; set; } // añadido
         public bool Estado { get; set; }
     }
 }

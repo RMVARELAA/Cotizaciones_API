@@ -1,11 +1,15 @@
-﻿using Cotizaciones_API.Models;
+﻿using Cotizaciones_API.DTOs.Cotizacion;
+using Cotizaciones_API.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System;
 
 namespace Cotizaciones_API.Interfaces.Cotizacion
 {
     public interface ICotizacionRepository
     {
         Task<long> InsertAsync(Models.Cotizacion cotizacion);
-        Task<Models.Cotizacion> GetByIdAsync(long id);
+        Task<CotizacionReadDto?> GetByIdAsync(long id);
         Task<IEnumerable<dynamic>> GetReportAsync(DateTime? desde, DateTime? hasta, int? idTipoSeguro);
 
         Task UpdateAsync(Models.Cotizacion cotizacion);

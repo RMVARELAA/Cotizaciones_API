@@ -74,10 +74,9 @@ namespace Cotizaciones_API.Controllers.Cotizacion
         {
             try
             {
-                var cot = await _cotService.GetByIdAsync(id);
-                if (cot == null) return NotFound(new { Message = "Cotización no encontrada." });
+                var dto = await _cotService.GetByIdAsync(id); // debe devolver CotizacionReadDto?
+                if (dto == null) return NotFound(new { Message = "Cotización no encontrada." });
 
-                var dto = _mapper.Map<CotizacionReadDto>(cot);
                 return Ok(dto);
             }
             catch (Exception ex)
@@ -100,6 +99,70 @@ namespace Cotizaciones_API.Controllers.Cotizacion
             {
                 _logger.LogError(ex, "Error generating cotizaciones report");
                 return Problem("Error al generar reporte", statusCode: 500);
+            }
+        }
+
+        // PUT: api/cotizaciones/{id}
+        [HttpPut("{id:long}")]
+        public async Task<IActionResult> Update([FromRoute] long id, [FromBody] CotizacionUpdateDto dto)
+        {
+            try
+            {
+                if (dto == null) return BadRequest("Payload inválido.");
+                if (id != dto.IdCotizacion) return BadRequest("El id de ruta no coincide con el id del body.");
+
+                if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+                var model = _mapper.Map<Models.Cotizacion>(dto);
+
+                await _cotService.UpdateAsync(model);
+
+                return NoContent();
+            }
+            catch (KeyNotFoundException knf)
+            {
+                _logger.LogWarning(knf, "Cotización no encontrada al actualizar Id={Id}", id);
+                return NotFound(new { Message = knf.Message });
+            }
+            catch (ArgumentException ae)
+            {
+                _logger.LogWarning(ae, "Validación fallida al actualizar cotización");
+                return BadRequest(new { Message = ae.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error Update CotizacionId={Id}", id);
+                return Problem("Error al actualizar cotización", statusCode: 500);
+            }
+        }
+
+        // DELETE: api/cotizaciones/{id}?usuario=someone
+        [HttpDelete("{id:long}")]
+        public async Task<IActionResult> Delete([FromRoute] long id, [FromQuery] string? usuario)
+        {
+            try
+            {
+                if (id <= 0) return BadRequest("Id inválido.");
+                if (string.IsNullOrWhiteSpace(usuario)) return BadRequest("Usuario es requerido en query string (usuario).");
+
+                await _cotService.DeleteAsync(id, usuario);
+
+                return NoContent();
+            }
+            catch (KeyNotFoundException knf)
+            {
+                _logger.LogWarning(knf, "Cotización no encontrada al eliminar Id={Id}", id);
+                return NotFound(new { Message = knf.Message });
+            }
+            catch (ArgumentException ae)
+            {
+                _logger.LogWarning(ae, "Validación fallida al eliminar cotización");
+                return BadRequest(new { Message = ae.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error Delete CotizacionId={Id}", id);
+                return Problem("Error al eliminar cotización", statusCode: 500);
             }
         }
     }

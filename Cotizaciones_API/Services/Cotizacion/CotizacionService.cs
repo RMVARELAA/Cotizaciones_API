@@ -104,7 +104,7 @@ namespace Cotizaciones_API.Services.Cotizacion
             return _cotRepo.GetReportAsync(desde, hasta, idTipoSeguro);
         }
 
-        public Task<Models.Cotizacion> GetByIdAsync(long id)
+        public Task<CotizacionReadDto?> GetByIdAsync(long id)
         {
             return _cotRepo.GetByIdAsync(id);
         }

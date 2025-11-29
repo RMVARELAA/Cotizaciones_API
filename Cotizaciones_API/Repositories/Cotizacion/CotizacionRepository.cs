@@ -1,9 +1,10 @@
-﻿using Dapper;
-using System.Data;
-using Cotizaciones_API.Data;
+﻿using Cotizaciones_API.Data;
+using Cotizaciones_API.DTOs.Cotizacion;
 using Cotizaciones_API.Interfaces.Cotizacion;
 using Cotizaciones_API.Models;
+using Dapper;
 using Microsoft.Extensions.Logging;
+using System.Data;
 
 namespace Cotizaciones_API.Repositories.Cotizacion
 {
@@ -50,7 +51,7 @@ namespace Cotizaciones_API.Repositories.Cotizacion
             }
         }
 
-        public async Task<Models.Cotizacion> GetByIdAsync(long id)
+        public async Task<CotizacionReadDto> GetByIdAsync(long id)
         {
             const string sp = "dbo.sp_Cotizacion_GetById";
 
@@ -60,7 +61,7 @@ namespace Cotizaciones_API.Repositories.Cotizacion
                 var p = new DynamicParameters();
                 p.Add("@IdCotizacion", id, DbType.Int64);
 
-                var cot = await conn.QueryFirstOrDefaultAsync<Models.Cotizacion>(sp, p, commandType: CommandType.StoredProcedure);
+                var cot = await conn.QueryFirstOrDefaultAsync<CotizacionReadDto>(sp, p, commandType: CommandType.StoredProcedure);
                 return cot;
             }
             catch (Exception ex)
