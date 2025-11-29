@@ -10,7 +10,8 @@ using Cotizaciones_API.Repositories.TipoSeguro;
 using Cotizaciones_API.Repositories.Moneda;
 using Cotizaciones_API.Services.Cliente;
 using Cotizaciones_API.Services.Cotizacion;
-
+using Cotizaciones_API.Interfaces.Utils;
+using Cotizaciones_API.Services.Utils;
 
 
 //using Cotizaciones_API.Services;
@@ -41,7 +42,7 @@ builder.Services.AddScoped<ICotizacionService, CotizacionService>();
 
 // Utilidades
 //builder.Services.AddSingleton<IEmailSender, EmailSender>();
-//builder.Services.AddScoped<IExcelExporter, ExcelExporter>();
+builder.Services.AddSingleton<IExcelExporter, ExcelExporter>();
 
 builder.Services.AddAutoMapper(cfg =>
 {

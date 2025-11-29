@@ -4,9 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using AutoMapper;
 using System.Collections.Generic;
+using System.Linq;
 
 using Cotizaciones_API.DTOs.Cotizacion;
 using Cotizaciones_API.Interfaces.Cotizacion;
+using Cotizaciones_API.Interfaces.Utils;
 using Cotizaciones_API.Models;
 
 namespace Cotizaciones_API.Controllers.Cotizacion
@@ -18,15 +20,18 @@ namespace Cotizaciones_API.Controllers.Cotizacion
         private readonly ICotizacionService _cotService;
         private readonly IMapper _mapper;
         private readonly ILogger<CotizacionesController> _logger;
+        private readonly IExcelExporter _excelExporter;
 
         public CotizacionesController(
             ICotizacionService cotService,
             IMapper mapper,
-            ILogger<CotizacionesController> logger)
+            ILogger<CotizacionesController> logger,
+            IExcelExporter excelExporter)
         {
             _cotService = cotService;
             _mapper = mapper;
             _logger = logger;
+            _excelExporter = excelExporter;
         }
 
         // POST: api/cotizaciones
@@ -40,11 +45,10 @@ namespace Cotizaciones_API.Controllers.Cotizacion
 
                 var (id, numero) = await _cotService.CreateAsync(dto);
 
-                // Obtener la cotización creada
-                var created = await _cotService.GetByIdAsync(id);
-                var readDto = _mapper.Map<CotizacionReadDto>(created);
+                // Obtener la cotización creada (el servicio devuelve CotizacionReadDto)
+                var readDto = await _cotService.GetByIdAsync(id);
 
-                // Añadir el número generado si el mapping no lo incluye
+                // Añadir el número generado si el registro no lo contiene
                 if (readDto != null && string.IsNullOrWhiteSpace(readDto.NumeroCotizacion))
                     readDto.NumeroCotizacion = numero;
 
@@ -74,7 +78,7 @@ namespace Cotizaciones_API.Controllers.Cotizacion
         {
             try
             {
-                var dto = await _cotService.GetByIdAsync(id); // debe devolver CotizacionReadDto?
+                var dto = await _cotService.GetByIdAsync(id);
                 if (dto == null) return NotFound(new { Message = "Cotización no encontrada." });
 
                 return Ok(dto);
@@ -88,16 +92,50 @@ namespace Cotizaciones_API.Controllers.Cotizacion
 
         // GET: api/cotizaciones/report?desde=2025-01-01&hasta=2025-12-31&idTipoSeguro=1
         [HttpGet("report")]
-        public async Task<IActionResult> Report([FromQuery] DateTime? desde, [FromQuery] DateTime? hasta, [FromQuery] int? idTipoSeguro)
+        public async Task<IActionResult> Report([FromQuery] DateTime? desde, [FromQuery] DateTime? hasta, [FromQuery] int? idTipoSeguro, [FromQuery] string? format = null)
         {
             try
             {
+                // Validaciones básicas de parámetros
+                if (desde.HasValue && hasta.HasValue && desde > hasta)
+                    return BadRequest(new { Message = "El parámetro 'desde' no puede ser mayor que 'hasta'." });
+
                 var rows = await _cotService.GetReportAsync(desde, hasta, idTipoSeguro);
-                return Ok(rows);
+
+                // materializar para comprobar contenido y evitar múltiples enumeraciones
+                var list = rows as IList<dynamic> ?? rows?.ToList();
+
+                if (list == null || list.Count == 0)
+                {
+                    return NoContent();
+                }
+
+                // Si piden Excel, generar y devolver el fichero
+                if (!string.IsNullOrWhiteSpace(format) && format.Equals("excel", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Nombre de fichero legible con rango y filtro
+                    var desdeStr = desde?.ToString("yyyyMMdd") ?? "start";
+                    var hastaStr = hasta?.ToString("yyyyMMdd") ?? "end";
+                    var tipoStr = idTipoSeguro.HasValue ? $"_Tipo{ idTipoSeguro.Value }" : string.Empty;
+                    var fileName = $"Reporte_Cotizaciones_{desdeStr}_{hastaStr}{tipoStr}_{DateTime.UtcNow:yyyyMMddHHmmss}.xlsx";
+
+                    // Title para la hoja
+                    var title = $"Reporte de Cotizaciones";
+                    if (desde.HasValue || hasta.HasValue)
+                        title += $" ({desde?.ToString("yyyy-MM-dd") ?? ""} → {hasta?.ToString("yyyy-MM-dd") ?? ""})";
+
+                    var bytes = _excelExporter.ExportToExcel(list, "Cotizaciones", title);
+
+                    const string contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                    return File(bytes, contentType, fileName);
+                }
+
+                // Por defecto devolver JSON
+                return Ok(list);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating cotizaciones report");
+                _logger.LogError(ex, "Error generating report");
                 return Problem("Error al generar reporte", statusCode: 500);
             }
         }

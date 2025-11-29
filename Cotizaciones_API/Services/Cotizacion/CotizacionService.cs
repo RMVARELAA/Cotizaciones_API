@@ -9,6 +9,7 @@ using Dapper;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Threading.Tasks;
 
 namespace Cotizaciones_API.Services.Cotizacion
@@ -56,8 +57,26 @@ namespace Cotizaciones_API.Services.Cotizacion
                 var moneda = await _monedaRepo.GetByIdAsync(dto.IdMoneda);
                 if (moneda == null) throw new KeyNotFoundException("Moneda no encontrada.");
 
+                decimal tasa;
+                using (var conn = _dapperContext.CreateConnection())
+                {
+                    var p = new DynamicParameters();
+                    p.Add("@IdTipoSeguro", dto.IdTipoSeguro, DbType.Int32);
+                    p.Add("@SumaAsegurada", dto.SumaAsegurada, DbType.Decimal);
+                    // llamamos al SP que devuelve una fila con columna Tasa
+                    var tasaDesdeRegla = await conn.QueryFirstOrDefaultAsync<decimal?>(
+                        "dbo.sp_Tasa_GetPorTipoYSuma", p, commandType: CommandType.StoredProcedure);
+                    if (tasaDesdeRegla.HasValue)
+                        tasa = tasaDesdeRegla.Value;
+                    else
+                        tasa = dto.Tasa; // fallback al valor que envía el cliente
+                }
+                dto.Tasa = tasa;
+
+                if (tasa < 0 || tasa > 1) throw new ArgumentException("Tasa inválida.");
+
                 // Calcular PrimaNeta (2 decimales)
-                var prima = Math.Round(dto.SumaAsegurada * dto.Tasa, 2);
+                var prima = Math.Round(dto.SumaAsegurada * tasa, 2);
 
                 // Generar NumeroCotizacion ejecutando el SP sp_Cotizacion_GenerarNumero
                 string numero;
