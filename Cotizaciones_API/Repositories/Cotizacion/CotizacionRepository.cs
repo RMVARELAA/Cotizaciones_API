@@ -176,13 +176,13 @@ namespace Cotizaciones_API.Repositories.Cotizacion
             }
         }
 
-        public async Task<PagedResult<Models.Cotizacion>> GetReportePaginadoAsync(
-    DateTime? desde,
-    DateTime? hasta,
-    int? idTipoSeguro,
-    string? filtro,
-    int pageNumber,
-    int pageSize)
+        public async Task<PagedResult<CotizacionReadDto>> GetReportePaginadoAsync(
+            DateTime? desde,
+            DateTime? hasta,
+            int? idTipoSeguro,
+            string? filtro,
+            int pageNumber,
+            int pageSize)
         {
             const string sp = "dbo.sp_Cotizacion_GetReportPaged";
 
@@ -198,19 +198,28 @@ namespace Cotizaciones_API.Repositories.Cotizacion
                 p.Add("@PageNumber", pageNumber, DbType.Int32);
                 p.Add("@PageSize", pageSize, DbType.Int32);
 
-                var rows = (await conn.QueryAsync<CotizacionReportRowDto>(sp, p,
-                    commandType: CommandType.StoredProcedure)).ToList();
+                // CotizacionReportRowDto debe tener TODAS las columnas que devuelve el SP
+                var rows = (await conn.QueryAsync<CotizacionReportRowDto>(
+                    sp, p, commandType: CommandType.StoredProcedure)).ToList();
 
                 var total = rows.FirstOrDefault()?.TotalRows ?? 0;
 
-                var items = rows.Select(r => new Models.Cotizacion
+                var items = rows.Select(r => new CotizacionReadDto
                 {
                     IdCotizacion = r.IdCotizacion,
                     NumeroCotizacion = r.NumeroCotizacion,
                     FechaCotizacion = r.FechaCotizacion,
+
                     IdTipoSeguro = r.IdTipoSeguro,
+                    NombreTipoSeguro = r.NombreTipoSeguro,
+
                     IdMoneda = r.IdMoneda,
+                    MonedaCodigoISO = r.MonedaCodigoISO,
+                    MonedaNombre = r.MonedaNombre,
+
                     IdCliente = r.IdCliente,
+                    ClienteNombre = r.ClienteNombre,
+
                     DescripcionBien = r.DescripcionBien,
                     SumaAsegurada = r.SumaAsegurada,
                     Tasa = r.Tasa,
@@ -218,7 +227,7 @@ namespace Cotizaciones_API.Repositories.Cotizacion
                     Observaciones = r.Observaciones
                 }).ToList();
 
-                return new PagedResult<Models.Cotizacion>
+                return new PagedResult<CotizacionReadDto>
                 {
                     Items = items,
                     TotalCount = total,
@@ -232,6 +241,7 @@ namespace Cotizaciones_API.Repositories.Cotizacion
                 throw;
             }
         }
+
 
 
     }

@@ -124,6 +124,7 @@ namespace Cotizaciones_API.Repositories.Cliente
                 parameters.Add("@Email", cliente.Email, DbType.String);
                 parameters.Add("@Direccion", cliente.Direccion, DbType.String);
                 parameters.Add("@UsuarioModificacion", cliente.UsuarioModificacion, DbType.String);
+                parameters.Add("@Estado", cliente.Estado, DbType.Boolean);
 
                 var rows = await conn.ExecuteAsync(
                     sp,

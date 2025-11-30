@@ -14,5 +14,6 @@
         public string? Email { get; set; }
         public string? Direccion { get; set; }
         public string? UsuarioModificacion { get; set; }
+        public bool Estado { get; set; }
     }
 }

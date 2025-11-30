@@ -249,6 +249,7 @@ namespace Cotizaciones_API.Services.Cotizacion
                 throw;
             }
         }
+
         public async Task<PagedResult<CotizacionReadDto>> GetReportePaginadoAsync(
             DateTime? desde,
             DateTime? hasta,
@@ -257,33 +258,17 @@ namespace Cotizaciones_API.Services.Cotizacion
             int pageNumber,
             int pageSize)
         {
-            // El repositorio devuelve PagedResult<Models.Cotizacion>
-            var paged = await _cotRepo.GetReportePaginadoAsync(desde, hasta, idTipoSeguro, filtro, pageNumber, pageSize);
-
-            // Mapear entidad -> ReadDto
-            var items = paged.Items.Select(c => new CotizacionReadDto
+            try
             {
-                IdCotizacion = c.IdCotizacion,
-                NumeroCotizacion = c.NumeroCotizacion,
-                FechaCotizacion = c.FechaCotizacion,
-                IdTipoSeguro = c.IdTipoSeguro,
-                IdMoneda = c.IdMoneda,
-                IdCliente = c.IdCliente,
-                DescripcionBien = c.DescripcionBien,
-                SumaAsegurada = c.SumaAsegurada,
-                Tasa = c.Tasa,
-                PrimaNeta = c.PrimaNeta,
-                Observaciones = c.Observaciones,
-                // Si en tu modelo Cotizacion tienes más campos que quieras exponer, los agregas aquí
-            }).ToList();
-
-            return new PagedResult<CotizacionReadDto>
+                var paged = await _cotRepo.GetReportePaginadoAsync(desde, hasta, idTipoSeguro, filtro, pageNumber, pageSize);
+                return paged;
+            }
+            catch (Exception ex)
             {
-                Items = items,
-                TotalCount = paged.TotalCount,
-                PageNumber = paged.PageNumber,
-                PageSize = paged.PageSize
-            };
+                _logger.LogError(ex, "Error en GetReportePaginadoAsync");
+                throw;
+            }
         }
+
     }
 }

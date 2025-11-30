@@ -24,5 +24,8 @@
         public string? UsuarioModificacion { get; set; }
 
         public bool Estado { get; set; }
+        public string? NombreTipoSeguro { get; set; }
+        public string? MonedaNombre { get; set; }
+        public string? ClienteNombre { get; set; }
     }
 }
