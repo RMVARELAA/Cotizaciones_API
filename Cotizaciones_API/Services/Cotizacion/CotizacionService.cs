@@ -165,7 +165,6 @@ namespace Cotizaciones_API.Services.Cotizacion
                 if (cotizacion == null) throw new ArgumentNullException(nameof(cotizacion));
                 if (cotizacion.IdCotizacion <= 0) throw new ArgumentException("IdCotizacion inválido.");
                 if (cotizacion.SumaAsegurada <= 0) throw new ArgumentException("SumaAsegurada debe ser mayor a 0.");
-                if (cotizacion.Tasa < 0 || cotizacion.Tasa > 1) throw new ArgumentException("Tasa inválida (0 - 1).");
 
                 // Existe la cotización?
                 var existing = await _cotRepo.GetByIdAsync(cotizacion.IdCotizacion);
@@ -190,9 +189,32 @@ namespace Cotizaciones_API.Services.Cotizacion
                     if (moneda == null) throw new KeyNotFoundException("Moneda no encontrada.");
                 }
 
-                // Recalcular prima neta
+                // Obtener (o recalcular) la tasa usando la misma regla que en Create
+                decimal tasa;
+                using (var conn = _dapperContext.CreateConnection())
+                {
+                    var p = new DynamicParameters();
+                    p.Add("@IdTipoSeguro", cotizacion.IdTipoSeguro, DbType.Int32);
+                    p.Add("@SumaAsegurada", cotizacion.SumaAsegurada, DbType.Decimal);
+
+                    var tasaDesdeRegla = await conn.QueryFirstOrDefaultAsync<decimal?>(
+                        "dbo.sp_Tasa_GetPorTipoYSuma", p, commandType: CommandType.StoredProcedure);
+
+                    if (tasaDesdeRegla.HasValue)
+                        tasa = tasaDesdeRegla.Value;
+                    else
+                        tasa = cotizacion.Tasa; // mantener la tasa enviada si SP no devuelve nada
+                }
+
+                // Validar tasa resultante
+                if (tasa < 0 || tasa > 1) throw new ArgumentException("Tasa inválida (0 - 1).");
+
+                // Asignar tasa y recalcular prima neta
+                cotizacion.Tasa = tasa;
                 cotizacion.PrimaNeta = Math.Round(cotizacion.SumaAsegurada * cotizacion.Tasa, 2);
-                cotizacion.FechaCotizacion = existing.FechaCotizacion; // conservar fecha original a menos que quieras modificarla
+
+                // Conservar FechaCotizacion original (si se desea)
+                cotizacion.FechaCotizacion = existing.FechaCotizacion;
 
                 await _cotRepo.UpdateAsync(cotizacion);
 
@@ -226,6 +248,42 @@ namespace Cotizaciones_API.Services.Cotizacion
                 _logger.LogError(ex, "Error en CotizacionService.DeleteAsync CotizacionId={Id}", id);
                 throw;
             }
+        }
+        public async Task<PagedResult<CotizacionReadDto>> GetReportePaginadoAsync(
+            DateTime? desde,
+            DateTime? hasta,
+            int? idTipoSeguro,
+            string? filtro,
+            int pageNumber,
+            int pageSize)
+        {
+            // El repositorio devuelve PagedResult<Models.Cotizacion>
+            var paged = await _cotRepo.GetReportePaginadoAsync(desde, hasta, idTipoSeguro, filtro, pageNumber, pageSize);
+
+            // Mapear entidad -> ReadDto
+            var items = paged.Items.Select(c => new CotizacionReadDto
+            {
+                IdCotizacion = c.IdCotizacion,
+                NumeroCotizacion = c.NumeroCotizacion,
+                FechaCotizacion = c.FechaCotizacion,
+                IdTipoSeguro = c.IdTipoSeguro,
+                IdMoneda = c.IdMoneda,
+                IdCliente = c.IdCliente,
+                DescripcionBien = c.DescripcionBien,
+                SumaAsegurada = c.SumaAsegurada,
+                Tasa = c.Tasa,
+                PrimaNeta = c.PrimaNeta,
+                Observaciones = c.Observaciones,
+                // Si en tu modelo Cotizacion tienes más campos que quieras exponer, los agregas aquí
+            }).ToList();
+
+            return new PagedResult<CotizacionReadDto>
+            {
+                Items = items,
+                TotalCount = paged.TotalCount,
+                PageNumber = paged.PageNumber,
+                PageSize = paged.PageSize
+            };
         }
     }
 }

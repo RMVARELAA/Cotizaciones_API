@@ -14,5 +14,12 @@ namespace Cotizaciones_API.Interfaces.Cotizacion
         Task<IEnumerable<CotizacionReadDto>> GetAllAsync();
         Task UpdateAsync(Models.Cotizacion cotizacion);
         Task DeleteAsync(long id, string usuarioModificacion);
+        Task<PagedResult<CotizacionReadDto>> GetReportePaginadoAsync(
+            DateTime? desde,
+            DateTime? hasta,
+            int? idTipoSeguro,
+            string? filtro,
+            int pageNumber,
+            int pageSize);
     }
 }

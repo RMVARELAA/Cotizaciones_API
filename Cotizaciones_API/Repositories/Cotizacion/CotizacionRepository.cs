@@ -3,6 +3,7 @@ using Cotizaciones_API.DTOs.Cotizacion;
 using Cotizaciones_API.Interfaces.Cotizacion;
 using Cotizaciones_API.Models;
 using Dapper;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using System.Data;
 
@@ -66,7 +67,7 @@ namespace Cotizaciones_API.Repositories.Cotizacion
                 throw;
             }
         }
-        public async Task<CotizacionReadDto> GetByIdAsync(long id)
+        public async Task<CotizacionReadDto?> GetByIdAsync(long id)
         {
             const string sp = "dbo.sp_Cotizacion_GetById";
 
@@ -174,5 +175,64 @@ namespace Cotizaciones_API.Repositories.Cotizacion
                 throw;
             }
         }
+
+        public async Task<PagedResult<Models.Cotizacion>> GetReportePaginadoAsync(
+    DateTime? desde,
+    DateTime? hasta,
+    int? idTipoSeguro,
+    string? filtro,
+    int pageNumber,
+    int pageSize)
+        {
+            const string sp = "dbo.sp_Cotizacion_GetReportPaged";
+
+            try
+            {
+                using var conn = _context.CreateConnection();
+
+                var p = new DynamicParameters();
+                p.Add("@Desde", desde, DbType.Date);
+                p.Add("@Hasta", hasta, DbType.Date);
+                p.Add("@IdTipoSeguro", idTipoSeguro, DbType.Int32);
+                p.Add("@Filtro", filtro, DbType.String);
+                p.Add("@PageNumber", pageNumber, DbType.Int32);
+                p.Add("@PageSize", pageSize, DbType.Int32);
+
+                var rows = (await conn.QueryAsync<CotizacionReportRowDto>(sp, p,
+                    commandType: CommandType.StoredProcedure)).ToList();
+
+                var total = rows.FirstOrDefault()?.TotalRows ?? 0;
+
+                var items = rows.Select(r => new Models.Cotizacion
+                {
+                    IdCotizacion = r.IdCotizacion,
+                    NumeroCotizacion = r.NumeroCotizacion,
+                    FechaCotizacion = r.FechaCotizacion,
+                    IdTipoSeguro = r.IdTipoSeguro,
+                    IdMoneda = r.IdMoneda,
+                    IdCliente = r.IdCliente,
+                    DescripcionBien = r.DescripcionBien,
+                    SumaAsegurada = r.SumaAsegurada,
+                    Tasa = r.Tasa,
+                    PrimaNeta = r.PrimaNeta,
+                    Observaciones = r.Observaciones
+                }).ToList();
+
+                return new PagedResult<Models.Cotizacion>
+                {
+                    Items = items,
+                    TotalCount = total,
+                    PageNumber = pageNumber,
+                    PageSize = pageSize
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en GetReportePaginadoAsync");
+                throw;
+            }
+        }
+
+
     }
 }

@@ -93,7 +93,7 @@ namespace Cotizaciones_API.Controllers.Cotizacion
         // GET: api/cotizaciones/{id}
         [HttpGet("{id:long}")]
         public async Task<IActionResult> GetById([FromRoute] long id)
-        {
+         {
             try
             {
                 var dto = await _cotService.GetByIdAsync(id);
@@ -110,31 +110,47 @@ namespace Cotizaciones_API.Controllers.Cotizacion
 
         // GET: api/cotizaciones/report?desde=2025-01-01&hasta=2025-12-31&idTipoSeguro=1
         [HttpGet("report")]
-        public async Task<IActionResult> Report([FromQuery] DateTime? desde, [FromQuery] DateTime? hasta, [FromQuery] int? idTipoSeguro, [FromQuery] string? format = null)
+        public async Task<IActionResult> Report(
+            [FromQuery] DateTime? desde,
+            [FromQuery] DateTime? hasta,
+            [FromQuery] int? idTipoSeguro,
+            [FromQuery] string? format = null)
         {
+            _logger.LogInformation("Report iniciado. desde={Desde}, hasta={Hasta}, tipo={Tipo}, format={Format}",
+                desde, hasta, idTipoSeguro, format);
+
             try
             {
                 // Validaciones básicas de parámetros
                 if (desde.HasValue && hasta.HasValue && desde > hasta)
+                {
+                    _logger.LogWarning("Parámetros inválidos: desde > hasta");
                     return BadRequest(new { Message = "El parámetro 'desde' no puede ser mayor que 'hasta'." });
+                }
 
                 var rows = await _cotService.GetReportAsync(desde, hasta, idTipoSeguro);
 
                 // materializar para comprobar contenido y evitar múltiples enumeraciones
                 var list = rows as IList<dynamic> ?? rows?.ToList();
 
+                _logger.LogInformation("Report obtuvo {Count} filas desde el servicio.", list?.Count ?? 0);
+
                 if (list == null || list.Count == 0)
                 {
+                    _logger.LogInformation("Report: lista vacía, devolviendo 204 NoContent.");
                     return NoContent();
                 }
 
                 // Si piden Excel, generar y devolver el fichero
-                if (!string.IsNullOrWhiteSpace(format) && format.Equals("excel", StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrWhiteSpace(format) &&
+                    format.Equals("excel", StringComparison.OrdinalIgnoreCase))
                 {
+                    _logger.LogInformation("Report: generando Excel...");
+
                     // Nombre de fichero legible con rango y filtro
                     var desdeStr = desde?.ToString("yyyyMMdd") ?? "start";
                     var hastaStr = hasta?.ToString("yyyyMMdd") ?? "end";
-                    var tipoStr = idTipoSeguro.HasValue ? $"_Tipo{ idTipoSeguro.Value }" : string.Empty;
+                    var tipoStr = idTipoSeguro.HasValue ? $"_Tipo{idTipoSeguro.Value}" : string.Empty;
                     var fileName = $"Reporte_Cotizaciones_{desdeStr}_{hastaStr}{tipoStr}_{DateTime.UtcNow:yyyyMMddHHmmss}.xlsx";
 
                     // Title para la hoja
@@ -142,21 +158,68 @@ namespace Cotizaciones_API.Controllers.Cotizacion
                     if (desde.HasValue || hasta.HasValue)
                         title += $" ({desde?.ToString("yyyy-MM-dd") ?? ""} → {hasta?.ToString("yyyy-MM-dd") ?? ""})";
 
-                    var bytes = _excelExporter.ExportToExcel(list, "Cotizaciones", title);
+                    byte[] bytes;
+
+                    try
+                    {
+                        _logger.LogInformation("Report: llamando a ExportToExcel con {Count} registros.", list.Count);
+
+                        // 🔴 Si esto mata el proceso, casi seguro el problema está dentro de ExportToExcel
+                        bytes = _excelExporter.ExportToExcel(list, "Cotizaciones", title);
+
+                        _logger.LogInformation("Report: ExportToExcel devolvió {Length} bytes.", bytes?.Length ?? 0);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error en ExportToExcel. Devolviendo 500 controlado.");
+                        return Problem("Error al generar el archivo de Excel", statusCode: 500);
+                    }
+
+                    if (bytes == null || bytes.Length == 0)
+                    {
+                        _logger.LogWarning("Report: ExportToExcel devolvió byte[] vacío o null.");
+                        return Problem("No se pudo generar el archivo de Excel.", statusCode: 500);
+                    }
 
                     const string contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+                    _logger.LogInformation("Report: devolviendo archivo Excel {FileName}.", fileName);
                     return File(bytes, contentType, fileName);
                 }
 
                 // Por defecto devolver JSON
+                _logger.LogInformation("Report: devolviendo JSON.");
                 return Ok(list);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating report");
+                _logger.LogError(ex, "Error generating report (catch externo).");
                 return Problem("Error al generar reporte", statusCode: 500);
             }
         }
+
+
+        [HttpGet("report-paged")]
+        public async Task<ActionResult<PagedResult<CotizacionReadDto>>> GetReportePaginado(
+            [FromQuery] DateTime? desde,
+            [FromQuery] DateTime? hasta,
+            [FromQuery] int? idTipoSeguro,
+            [FromQuery] string? q,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            // q = filtro de búsqueda (número, cliente, descripción, etc.)
+            var result = await _cotService.GetReportePaginadoAsync(
+                desde,
+                hasta,
+                idTipoSeguro,
+                q,
+                pageNumber,
+                pageSize);
+
+            return Ok(result);
+        }
+
 
         // PUT: api/cotizaciones/{id}
         [HttpPut("{id:long}")]
@@ -192,9 +255,10 @@ namespace Cotizaciones_API.Controllers.Cotizacion
             }
         }
 
+
         // DELETE: api/cotizaciones/{id}?usuario=someone
         [HttpDelete("{id:long}")]
-        public async Task<IActionResult> Delete([FromRoute] long id, [FromQuery] string? usuario)
+        public async Task<IActionResult> Delete([FromRoute] long id, [FromQuery] string? usuario = "admin")
         {
             try
             {
